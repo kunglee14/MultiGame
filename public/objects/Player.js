@@ -8,7 +8,7 @@ class Player{
     }
     
     draw(cxt, color) {
-        console.log(this.x, this.y)
+        // console.log(this.x, this.y)
         if(color == null){
             color = this.color
         }

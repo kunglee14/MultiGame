@@ -3,17 +3,8 @@ const c = canvas.getContext('2d')
 
 // const socket = io()
 
-const devicePixelRatio = window.devicePixelRatio || 1
+p1 = null
 
-canvas.width = 1024 * devicePixelRatio
-canvas.height = 576 * devicePixelRatio
-
-c.scale(devicePixelRatio, devicePixelRatio)
-
-
-//Draw players
-p1 = new Player(100,200,50,"#eb4034","Keeby")
-p1.draw(c)
 // setInterval(() => {
 //     if (keys.w.pressed) {
 //       sequenceNumber++
@@ -88,3 +79,17 @@ window.addEventListener('keydown', (event) => {
     //     break
     // }
   })
+
+document.querySelector('#usernameForm').addEventListener('submit', (event) => {
+    event.preventDefault()
+    document.querySelector('#usernameForm').style.display = 'none'
+    const devicePixelRatio = window.devicePixelRatio || 1
+
+    canvas.width = 1024 * devicePixelRatio
+    canvas.height = 576 * devicePixelRatio
+
+    c.scale(devicePixelRatio, devicePixelRatio)
+    username = document.querySelector('#usernameInput').value
+    p1 = new Player(100,200,50,"#eb4034",username)
+    p1.draw(c)
+})
