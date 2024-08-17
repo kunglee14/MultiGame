@@ -16,11 +16,15 @@ app.get('/', (req, res) => {
 
 io.on('connection', (socket) => {
     console.log('a user connected')
+    socket.on('keydown', ({keycode}) => {
+        console.log(keycode)
+    })
 })
 
 server.listen(port, () => {
     console.log(`Server running at http://localhost:${port}/`);
 });
+
 
 console.log("Server Loaded")
 

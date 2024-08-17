@@ -1,4 +1,8 @@
-div {
-    font-size: 20;
-    color: blue;
+canvas { 
+    /* border: 1px solid black; */
+    background-color: black;
+}
+
+body {
+    background-color: black;
 }
