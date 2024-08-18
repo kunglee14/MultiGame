@@ -82,35 +82,16 @@ window.addEventListener('keydown', (event) => {
     }
   })
 
-// function render(bullet) {         
-//     const SPEED = 15
-//     setTimeout(function() {
-//         if (bullet.x < canvas.width && bullet.x > 0 && bullet.y < canvas.height && bullet.y > 0) {           
-//             bullet.draw()
-//             if (bullet.old_x != null && bullet.old_y != null){
-//                 bullet.remove()
-//             }
-//             bullet.old_x = bullet.x
-//             bullet.old_y = bullet.y
-//             bullet.x += SPEED*Math.cos(bullet.angle)
-//             bullet.y -= SPEED*Math.sin(bullet.angle)
-//             render(bullet)     
-//         }else{
-//             bullet.remove()
-//         }              
-//     }, 20)
-// }
-var last_shot = 0
-function fire(event) {
-    if(Date.now() - last_shot > 500){
-        last_shot = Date.now()
-        // bullet = p1.shoot(event.x, event.y)
-        // render(bullet)
-    }
-}
-
 canvas.addEventListener("mousemove", (event) => (socket.emit("updateDirection", {mouse_x:event.x, mouse_y:event.y})), false)
-// canvas.addEventListener("mousedown", fire, false)
+canvas.addEventListener("mousedown", (event) => (socket.emit("shotFired")), false)
+socket.on("cleanupPlayer", (player)=>{
+    const temp = new Player(
+        player.x,
+        player.y,
+        player.clear_radius
+    )
+    temp.remove()
+})
 socket.on("updatePlayers", (backendPlayers) =>{
     for (const socketId in backendPlayers){
         const player_data = backendPlayers[socketId]
@@ -130,9 +111,28 @@ socket.on("updatePlayers", (backendPlayers) =>{
             frontendPlayers[socketId].clear_radius = player_data.clear_radius
             frontendPlayers[socketId].cords = player_data.cords
         }
-        // const frontendPlayer = frontendPlayers[socketId]
-        // console.log(frontendPlayers[socketId])
         frontendPlayers[socketId].draw()
+    }
+})
+socket.on("removeOldProjectiles", (backendProjectiles) =>{
+    for(const proj_id in backendProjectiles){
+        const proj = backendProjectiles[proj_id]
+        cxt.shadowColor = window.getComputedStyle(canvas).backgroundColor
+        cxt.shadowBlur = 5
+        cxt.beginPath()
+        cxt.arc(proj.x, proj.y, proj.radius+5, 0, Math.PI * 2)
+        cxt.fillStyle = window.getComputedStyle(canvas).backgroundColor
+        cxt.fill()
+    }
+})
+socket.on("updateProjectiles", (backendProjectiles) =>{
+    for(const proj_id in backendProjectiles){
+        const proj = backendProjectiles[proj_id]
+        cxt.shadowBlur = 5
+        cxt.beginPath()
+        cxt.arc(proj.x, proj.y, proj.radius, 0, Math.PI * 2)
+        cxt.fillStyle = "white"
+        cxt.fill()
     }
 })
 socket.emit("initGame", {username:"Keeby", width:canvas.width, height:canvas.height})

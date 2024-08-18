@@ -10,7 +10,7 @@ class Player{
 
     draw() { 
         cxt.shadowColor = this.color
-        cxt.shadowBlur = 10
+        cxt.shadowBlur = 15
 
         cxt.beginPath()
 
@@ -29,12 +29,13 @@ class Player{
     }
 
     remove() {
-        cxt.shadowColor = window.getComputedStyle(canvas).backgroundColor
-        cxt.shadowBlur = 10
+        // cxt.shadowColor = window.getComputedStyle(canvas).backgroundColor
+        cxt.shadowBlur = 0
         
         cxt.beginPath()
         cxt.arc(this.x, this.y, this.clear_radius+10, 0, Math.PI * 2)
         cxt.fillStyle = window.getComputedStyle(canvas).backgroundColor
+        // cxt.fillStyle = "white"
         cxt.fill()
     }
 }

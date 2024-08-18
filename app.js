@@ -15,36 +15,47 @@ app.get('/', (req, res) => {
 });
 
 const backendPlayers = {}
+const backendProjectiles = {}
 const center_to_corner_length = 50
 const SPEED = 10
 
-function getPlayerVertCords(x, y, mouse_x, mouse_y){
+function updatePlayerVertCords(socketId, x = null, y = null, mouse_x = null, mouse_y = null){
+    if(x != null) backendPlayers[socketId].x = x
+    if(y != null)  backendPlayers[socketId].y = y
+    if(mouse_x != null) backendPlayers[socketId].mouse_x = mouse_x
+    if(mouse_y != null) backendPlayers[socketId].mouse_y = mouse_y
+    const player = backendPlayers[socketId]
+    
     //Origin (0,0) is top left corner
-    const dy = -(mouse_y - y) //Flipped since I want + Pi/4 to be top-right of character
-    const dx = mouse_x - x
+    const dy = -(player.mouse_y - player.y) //Flipped since I want + Pi/4 to be top-right of character
+    const dx = player.mouse_x - player.x
     var angle = Math.atan(dy/dx)
     if(dx < 0){
         angle = Math.PI + Math.atan(dy/dx)   
     }
 
-    function getCords(center_x, center_y, length, ang) {
-        const x_cord = center_x + (length * Math.cos(ang))
-        const y_cord = center_y - (length * Math.sin(ang))
+    function getCords(ang) {
+        const x_cord = player.x + (center_to_corner_length * Math.cos(ang))
+        const y_cord = player.y - (center_to_corner_length * Math.sin(ang))
         return [x_cord, y_cord]
     }
 
-    const head_cords = getCords(x, y, center_to_corner_length, angle)
-    const left_cords = getCords(x, y, center_to_corner_length, Math.PI * (2/3) + angle)
-    const right_cords = getCords(x, y, center_to_corner_length, Math.PI * (4/3) + angle)
-    return {head:head_cords, left:left_cords, right:right_cords}
+    const head_cords = getCords(angle)
+    const left_cords = getCords(Math.PI * (2/3) + angle)
+    const right_cords = getCords(Math.PI * (4/3) + angle)
+    backendPlayers[socketId].cords = {head:head_cords, left:left_cords, right:right_cords}
 }
 
 io.on('connection', (socket) => {
     console.log(`a user connected: ${socket.id}`)
     socket.on('disconnect', (reason) => {
-        console.log(`(${socket.id}) disconnected: ${reason}`)
-        delete backendPlayers[socket.id]
-        // io.emit('updatePlayers', backEndPlayers) //A signal sent to Client
+        const player = backendPlayers[socket.id] 
+        // console.log(player)
+        if(player){
+            delete backendPlayers[socket.id]
+            io.emit('cleanupPlayer', player)
+            console.log(`${player.username} disconnected: ${reason}`)
+        }
     })
     socket.on('keydown', ({keycode}) => {
         if(!backendPlayers[socket.id]) return
@@ -64,15 +75,33 @@ io.on('connection', (socket) => {
                 backendPlayers[socket.id].x += SPEED
                 break
         }
-        const player = backendPlayers[socket.id]
-        backendPlayers[socket.id].cords = getPlayerVertCords(player.x, player.y, player.mouse_x, player.mouse_y)
+        updatePlayerVertCords(socket.id)
+    })
+    var last_shot = 0
+    let projectileId = 0
+    socket.on("shotFired", ()=>{
+        if(Date.now() - last_shot > 500){
+            last_shot = Date.now()
+            const player = backendPlayers[socket.id]
+            const dy = -(player.mouse_y - player.y)
+            const dx = player.mouse_x - player.x
+            const BULLET_SPEED = 15
+            var angle = Math.atan(dy/dx)
+            if(dx < 0){
+                angle = Math.PI + Math.atan(dy/dx)   
+            }
+            backendProjectiles[projectileId++] = {
+                x: player.cords.head[0],
+                y: player.cords.head[1],
+                angle: angle,
+                vel: BULLET_SPEED,
+                radius: 10,
+            }   
+        }
     })
     socket.on("updateDirection", ({mouse_x, mouse_y}) =>{
-        const player = backendPlayers[socket.id]
-        if(!player) return
-        backendPlayers[socket.id].mouse_x = mouse_x
-        backendPlayers[socket.id].mouse_y = mouse_y
-        backendPlayers[socket.id].cords = getPlayerVertCords(player.x, player.y, mouse_x, mouse_y) 
+        if(!backendPlayers[socket.id]) return
+        updatePlayerVertCords(socket.id, null, null, mouse_x, mouse_y) 
     })
     socket.on("initGame", ({username, width, height}) =>{
         const x = width * Math.random()
@@ -87,12 +116,21 @@ io.on('connection', (socket) => {
             mouse_y: mouse_y,
             clear_radius: center_to_corner_length,
             color: `hsl(${360 * Math.random()}, 100%, 30%)`,
-            cords: getPlayerVertCords(x, y, mouse_x, mouse_y)
         }
+        updatePlayerVertCords(socket.id)
     })
 })
 
 setInterval(()=>{
+    io.emit("removeOldProjectiles", backendProjectiles)
+
+    //Change Do collision checks
+    for (const proj_id in backendProjectiles){
+        const proj = backendProjectiles[proj_id]
+        backendProjectiles[proj_id].x += proj.vel * Math.cos(proj.angle)
+        backendProjectiles[proj_id].y -= proj.vel * Math.sin(proj.angle)
+    }
+    io.emit("updateProjectiles", backendProjectiles)
     io.emit("updatePlayers", backendPlayers)
 },20)
 
