@@ -3,7 +3,14 @@ const c = canvas.getContext('2d')
 
 // const socket = io()
 
-p1 = null
+const devicePixelRatio = window.devicePixelRatio
+// console.log(devicePixelRatio)
+canvas.width = 1024 * devicePixelRatio
+canvas.height = 768 * devicePixelRatio
+
+c.scale(devicePixelRatio, devicePixelRatio)
+p1 = new Player(100,200,0,"#eb4034","Keeby")
+p1.draw(c)
 
 // setInterval(() => {
 //     if (keys.w.pressed) {
@@ -34,11 +41,11 @@ p1 = null
 //       socket.emit('keydown', { keycode: 'KeyD', sequenceNumber })
 //     }
 //   }, 15)
-  
+
 window.addEventListener('keydown', (event) => {
-    SPEED = 20
+    SPEED = 5
     // The origin (0,0) is at the top left
-    p1.draw(c,"black")
+    p1.remove(c)
     switch (event.code) {
         case 'KeyW':
             p1.y -= SPEED 
@@ -79,17 +86,30 @@ window.addEventListener('keydown', (event) => {
     //     break
     // }
   })
-
-document.querySelector('#usernameForm').addEventListener('submit', (event) => {
-    event.preventDefault()
-    document.querySelector('#usernameForm').style.display = 'none'
-    const devicePixelRatio = window.devicePixelRatio || 1
-
-    canvas.width = 1024 * devicePixelRatio
-    canvas.height = 576 * devicePixelRatio
-
-    c.scale(devicePixelRatio, devicePixelRatio)
-    username = document.querySelector('#usernameInput').value
-    p1 = new Player(100,200,50,"#eb4034",username)
+function updateDirection(event) {
+    cursor_offset_y = 20
+    cursor_offset_x = 10
+    //Origin (0,0) is top left corner
+    dy = -(event.y-cursor_offset_y - p1.y) //Flipped since I want + Pi/4 to be top-right of character
+    dx = event.x-cursor_offset_x - p1.x
+    angle = Math.atan(dy/dx)
+    if(dx < 0){
+        angle = Math.PI + Math.atan(dy/dx)   
+    }
+    // if(dx < 0 && dy < 0){
+    //     angle = -Math.PI + Math.atan(dy/dx)
+    // }
+    console.log("Rads: "+ angle + ", Deg: " + (angle * 180 / Math.PI))
+    p1.angle = angle
+    p1.remove(c)
     p1.draw(c)
-})
+}
+
+canvas.addEventListener("mousemove",updateDirection, false)
+// document.querySelector('#usernameForm').addEventListener('submit', (event) => {
+//     event.preventDefault()
+//     document.querySelector('#usernameForm').style.display = 'none'
+//     username = document.querySelector('#usernameInput').value
+//     p1 = new Player(100,200,50,"#eb4034",username)
+//     p1.draw(c)
+// })
