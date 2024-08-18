@@ -1,12 +1,18 @@
 const canvas = document.querySelector('canvas')
+const body = document.body
 const cxt = canvas.getContext('2d')
 
 // const socket = io()
 
 const devicePixelRatio = window.devicePixelRatio
 // console.log(devicePixelRatio)
-canvas.width = 1024 * devicePixelRatio
-canvas.height = 768 * devicePixelRatio
+// canvas.width = 1024 * devicePixelRatio
+// canvas.height = 768 * devicePixelRatio
+// console.log(window.getComputedStyle(body).width, window.getComputedStyle(body).height)
+w = parseFloat(window.getComputedStyle(body).width)
+h = parseFloat(window.getComputedStyle(body).width)
+canvas.width = w
+canvas.height = h
 
 cxt.scale(devicePixelRatio, devicePixelRatio)
 p1 = new Player(100,200,150,200,"#eb4034","Keeby")
