@@ -82,15 +82,6 @@ window.addEventListener('keydown', (event) => {
     }
   })
 
-
-
-function updateDirection(event) {
-    const frontendPlayer = frontendPlayers[socket.id]
-    if(!frontendPlayer) return
-    frontendPlayer.mouse_x = event.x
-    frontendPlayer.mouse_y = event.y
-}
-             
 // function render(bullet) {         
 //     const SPEED = 15
 //     setTimeout(function() {
@@ -118,36 +109,33 @@ function fire(event) {
     }
 }
 
-canvas.addEventListener("mousemove", updateDirection, false)
+canvas.addEventListener("mousemove", (event) => (socket.emit("updateDirection", {mouse_x:event.x, mouse_y:event.y})), false)
 // canvas.addEventListener("mousedown", fire, false)
-function getCoords(x,  y, angle, center_to_corner_length) {
-    const x_cord = x + (center_to_corner_length * Math.cos(angle))
-    const y_cord = y - (center_to_corner_length * Math.sin(angle))
-    return [x_cord, y_cord]
-}
-socket.emit("initGame", {username:"Keeby", width:canvas.width, height:canvas.height})
 socket.on("updatePlayers", (backendPlayers) =>{
     for (const socketId in backendPlayers){
-        const backendPlayer = backendPlayers[socketId]
+        const player_data = backendPlayers[socketId]
         if(!frontendPlayers[socketId]){
             frontendPlayers[socketId] = new Player(
-                backendPlayer.x,
-                backendPlayer.y,
-                backendPlayer.x+50,
-                backendPlayer.y,
-                backendPlayer.color,
-                backendPlayer.username
+                player_data.x,
+                player_data.y,
+                player_data.clear_radius,
+                player_data.cords,
+                player_data.color,
+                player_data.username
             )
         }else{
             frontendPlayers[socketId].remove()
-            frontendPlayers[socketId].x = backendPlayer.x
-            frontendPlayers[socketId].y = backendPlayer.y
+            frontendPlayers[socketId].x = player_data.x
+            frontendPlayers[socketId].y = player_data.y
+            frontendPlayers[socketId].clear_radius = player_data.clear_radius
+            frontendPlayers[socketId].cords = player_data.cords
         }
         // const frontendPlayer = frontendPlayers[socketId]
-        
+        // console.log(frontendPlayers[socketId])
         frontendPlayers[socketId].draw()
     }
 })
+socket.emit("initGame", {username:"Keeby", width:canvas.width, height:canvas.height})
 // document.querySelector('#usernameForm').addEventListener('submit', (event) => {
 //     event.preventDefault()
 //     document.querySelector('#usernameForm').style.display = 'none'
