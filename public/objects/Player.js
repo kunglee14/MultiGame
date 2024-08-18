@@ -16,17 +16,26 @@ class Player{
     }
 
     shoot(mouse_x, mouse_y){
-        
+        const center_to_corner_length = 50 + 20
         const cursor_offset_x = 10
         const dy = -(mouse_y - p1.y) //Flipped since I want + Pi/4 to be top-right of character
         const dx = mouse_x - cursor_offset_x - p1.x
-        const angle = Math.atan(dy/dx)
-        console.log("Rads: "+ angle + ", Deg : " + (angle * 180 / Math.PI))
-        const bullet = new Bullet(1,1,1)
-        bullet.draw()
+        var angle = Math.atan(dy/dx)
+        if(dx < 0){
+            angle = Math.PI + Math.atan(dy/dx)
+        }
+        // if(dy < 0 && dx >= 0){
+        //     angle = 2*Math.PI + Math.atan(dy/dx)
+        // }
+        // console.log("Rads: "+ angle + ", Deg : " + (angle * 180 / Math.PI))
+        // console.log("X: "+ center_to_corner_length*Math.cos(angle) + ", Y: "+ center_to_corner_length*Math.sin(angle))
+        const b_x = this.x + center_to_corner_length*Math.cos(angle)
+        const b_y = this.y - center_to_corner_length*Math.sin(angle)
+        const bullet = new Bullet(b_x, b_y, angle)
+        return bullet
     }
 
-    draw(cxt) { 
+    draw() { 
         cxt.shadowColor = this.color
         cxt.shadowBlur = 10
 
@@ -34,8 +43,8 @@ class Player{
         const cursor_offset_x = 10
 
         //Origin (0,0) is top left corner
-        const dy = -(this.mouse_y - p1.y) //Flipped since I want + Pi/4 to be top-right of character
-        const dx = this.mouse_x - cursor_offset_x - p1.x
+        const dy = -(this.mouse_y - this.y) //Flipped since I want + Pi/4 to be top-right of character
+        const dx = this.mouse_x - cursor_offset_x - this.x
         var angle = Math.atan(dy/dx)
         if(dx < 0){
             angle = Math.PI + Math.atan(dy/dx)   
@@ -63,7 +72,7 @@ class Player{
         cxt.fillText(this.username, this.x-(this.username.length * 2.5), this.y)
     }
 
-    remove(cxt) {
+    remove() {
         cxt.shadowColor = window.getComputedStyle(canvas).backgroundColor
         cxt.shadowBlur = 0
         

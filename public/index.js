@@ -1,5 +1,5 @@
 const canvas = document.querySelector('canvas')
-const c = canvas.getContext('2d')
+const cxt = canvas.getContext('2d')
 
 // const socket = io()
 
@@ -8,9 +8,9 @@ const devicePixelRatio = window.devicePixelRatio
 canvas.width = 1024 * devicePixelRatio
 canvas.height = 768 * devicePixelRatio
 
-c.scale(devicePixelRatio, devicePixelRatio)
+cxt.scale(devicePixelRatio, devicePixelRatio)
 p1 = new Player(100,200,150,200,"#eb4034","Keeby")
-p1.draw(c)
+p1.draw()
 
 const keys = {
     w_pressed : false,
@@ -21,7 +21,7 @@ const keys = {
 
 setInterval(() => {
     const SPEED = 4
-    p1.remove(c)
+    p1.remove()
     if (keys.w_pressed) {
       p1.y += -SPEED
     }
@@ -37,7 +37,7 @@ setInterval(() => {
     if (keys.d_pressed) {
         p1.x += SPEED
     }
-    p1.draw(c)
+    p1.draw()
   }, 15)
 
 window.addEventListener('keydown', (event) => {    
@@ -83,15 +83,34 @@ window.addEventListener('keydown', (event) => {
 function updateDirection(event) {
     p1.mouse_x = event.x
     p1.mouse_y = event.y
-    p1.remove(c)
-    p1.draw(c)
+    p1.remove()
+    p1.draw()
 }
-
+             
+function render(bullet) {         
+    const SPEED = 15
+    setTimeout(function() {
+        if (bullet.x < canvas.width && bullet.x > 0 && bullet.y < canvas.height && bullet.y > 0) {           
+            bullet.draw()
+            if (bullet.old_x != null && bullet.old_y != null){
+                bullet.remove()
+            }
+            bullet.old_x = bullet.x
+            bullet.old_y = bullet.y
+            bullet.x += SPEED*Math.cos(bullet.angle)
+            bullet.y -= SPEED*Math.sin(bullet.angle)
+            render(bullet)     
+        }else{
+            bullet.remove()
+        }              
+    }, 20)
+}
 var last_shot = 0
 function fire(event) {
-    if(Date.now() - last_shot > 50){
+    if(Date.now() - last_shot > 500){
         last_shot = Date.now()
-        p1.shoot(event.x, event.y)
+        bullet = p1.shoot(event.x, event.y)
+        render(bullet)
     }
 }
 
