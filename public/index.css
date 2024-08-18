@@ -6,6 +6,10 @@ body {
     background-color: black;
 }
 
+#score-board{
+    color: white;
+    overflow:hidden;
+}
 #usernameContainer {
     display: flex;
     align-items: center;

@@ -114,7 +114,30 @@ socket.on("updatePlayers", (backendPlayers) =>{
         frontendPlayers[socketId].draw()
     }
 })
-socket.on("removeOldProjectiles", (backendProjectiles) =>{
+socket.on("updateScoreboard", (scoreboard)=>{
+    const sb = document.getElementById("score-board")
+    const sorted = Object.keys(scoreboard)
+    .sort((a, b) => scoreboard[b] - scoreboard[a])
+    .reduce((acc, key) => {
+      acc[key] = scoreboard[key];
+      return acc;
+    }, {});
+    sb.innerHTML = null
+    for(const player_id in sorted){
+        const li = document.createElement("li")
+        li.appendChild(document.createTextNode(`${sorted[player_id].username}: ${sorted[player_id].score}`))
+        sb.appendChild(li)
+    }
+})
+socket.on("removeProjectile", (proj) =>{
+    cxt.shadowColor = window.getComputedStyle(canvas).backgroundColor
+    cxt.shadowBlur = 5
+    cxt.beginPath()
+    cxt.arc(proj.x, proj.y, proj.radius+5, 0, Math.PI * 2)
+    cxt.fillStyle = window.getComputedStyle(canvas).backgroundColor
+    cxt.fill()
+})
+socket.on("removeTrailProjectiles", (backendProjectiles) =>{
     for(const proj_id in backendProjectiles){
         const proj = backendProjectiles[proj_id]
         cxt.shadowColor = window.getComputedStyle(canvas).backgroundColor
@@ -135,11 +158,10 @@ socket.on("updateProjectiles", (backendProjectiles) =>{
         cxt.fill()
     }
 })
-socket.emit("initGame", {username:"Keeby", width:canvas.width, height:canvas.height})
-// document.querySelector('#usernameForm').addEventListener('submit', (event) => {
-//     event.preventDefault()
-//     document.querySelector('#usernameForm').style.display = 'none'
-//     username = document.querySelector('#usernameInput').value
-//     p1 = new Player(100,200,50,"#eb4034",username)
-//     p1.draw(c)
-// })
+document.querySelector('#usernameForm').addEventListener('submit', (event) => {
+    event.preventDefault()
+    document.querySelector('#usernameForm').style.display = 'none'
+    username = document.querySelector('#usernameInput').value
+    document.querySelector("body").removeChild(document.querySelector('#usernameContainer'))
+    socket.emit("initGame", {username:username, width:canvas.width, height:canvas.height})
+})

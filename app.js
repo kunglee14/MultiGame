@@ -16,8 +16,11 @@ app.get('/', (req, res) => {
 
 const backendPlayers = {}
 const backendProjectiles = {}
+const scoreboard = {}
 const center_to_corner_length = 50
 const SPEED = 10
+let canvas_width = null
+let canvas_height = null
 
 function updatePlayerVertCords(socketId, x = null, y = null, mouse_x = null, mouse_y = null){
     if(x != null) backendPlayers[socketId].x = x
@@ -53,6 +56,7 @@ io.on('connection', (socket) => {
         // console.log(player)
         if(player){
             delete backendPlayers[socket.id]
+            delete scoreboard[socket.id]
             io.emit('cleanupPlayer', player)
             console.log(`${player.username} disconnected: ${reason}`)
         }
@@ -80,6 +84,7 @@ io.on('connection', (socket) => {
     var last_shot = 0
     let projectileId = 0
     socket.on("shotFired", ()=>{
+        if(!backendPlayers[socket.id]) return
         if(Date.now() - last_shot > 500){
             last_shot = Date.now()
             const player = backendPlayers[socket.id]
@@ -96,6 +101,7 @@ io.on('connection', (socket) => {
                 angle: angle,
                 vel: BULLET_SPEED,
                 radius: 10,
+                playerId: socket.id
             }   
         }
     })
@@ -106,6 +112,8 @@ io.on('connection', (socket) => {
     socket.on("initGame", ({username, width, height}) =>{
         const x = width * Math.random()
         const y = height * Math.random()
+        canvas_width = width 
+        canvas_height = height
         const mouse_x = x + 100
         const mouse_y = y
         backendPlayers[socket.id] = {
@@ -118,17 +126,36 @@ io.on('connection', (socket) => {
             color: `hsl(${360 * Math.random()}, 100%, 30%)`,
         }
         updatePlayerVertCords(socket.id)
+        scoreboard[socket.id] = {
+            score: 0,
+            username: username
+        }
+        io.emit("updateScoreboard",scoreboard)
     })
 })
 
 setInterval(()=>{
-    io.emit("removeOldProjectiles", backendProjectiles)
+    io.emit("removeTrailProjectiles", backendProjectiles)
 
     //Change Do collision checks
     for (const proj_id in backendProjectiles){
         const proj = backendProjectiles[proj_id]
         backendProjectiles[proj_id].x += proj.vel * Math.cos(proj.angle)
         backendProjectiles[proj_id].y -= proj.vel * Math.sin(proj.angle)
+        if(proj.x < 0 || proj.x > canvas_width || proj.y < 0 || proj.y > canvas_height){
+            delete backendProjectiles[proj_id]
+        }
+        
+        for(const player_id in backendPlayers){
+            const player = backendPlayers[player_id]
+            const dist = Math.hypot(proj.x-player.x, proj.y-player.y)
+            if(dist <= (player.clear_radius + proj.radius)){
+                delete backendProjectiles[proj_id]
+                scoreboard[proj.playerId].score++
+                io.emit("updateScoreboard", scoreboard)
+                break
+            }
+        }
     }
     io.emit("updateProjectiles", backendProjectiles)
     io.emit("updatePlayers", backendPlayers)
