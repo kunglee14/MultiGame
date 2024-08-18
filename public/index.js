@@ -12,79 +12,72 @@ c.scale(devicePixelRatio, devicePixelRatio)
 p1 = new Player(100,200,150,200,"#eb4034","Keeby")
 p1.draw(c)
 
-// setInterval(() => {
-//     if (keys.w.pressed) {
-//       sequenceNumber++
-//       playerInputs.push({ sequenceNumber, dx: 0, dy: -SPEED })
-//       // frontEndPlayers[socket.id].y -= SPEED
-//       socket.emit('keydown', { keycode: 'KeyW', sequenceNumber })
-//     }
-  
-//     if (keys.a.pressed) {
-//       sequenceNumber++
-//       playerInputs.push({ sequenceNumber, dx: -SPEED, dy: 0 })
-//       // frontEndPlayers[socket.id].x -= SPEED
-//       socket.emit('keydown', { keycode: 'KeyA', sequenceNumber })
-//     }
-  
-//     if (keys.s.pressed) {
-//       sequenceNumber++
-//       playerInputs.push({ sequenceNumber, dx: 0, dy: SPEED })
-//       // frontEndPlayers[socket.id].y += SPEED
-//       socket.emit('keydown', { keycode: 'KeyS', sequenceNumber })
-//     }
-  
-//     if (keys.d.pressed) {
-//       sequenceNumber++
-//       playerInputs.push({ sequenceNumber, dx: SPEED, dy: 0 })
-//       // frontEndPlayers[socket.id].x += SPEED
-//       socket.emit('keydown', { keycode: 'KeyD', sequenceNumber })
-//     }
-//   }, 15)
+const keys = {
+    w_pressed : false,
+    a_pressed : false,
+    s_pressed : false,
+    d_pressed : false,
+}
 
-window.addEventListener('keydown', (event) => {
-    SPEED = 5
-    // The origin (0,0) is at the top left
+setInterval(() => {
+    const SPEED = 4
     p1.remove(c)
+    if (keys.w_pressed) {
+      p1.y += -SPEED
+    }
+  
+    if (keys.a_pressed) {
+      p1.x += -SPEED
+    }
+  
+    if (keys.s_pressed) {
+        p1.y += SPEED
+    }
+  
+    if (keys.d_pressed) {
+        p1.x += SPEED
+    }
+    p1.draw(c)
+  }, 15)
+
+window.addEventListener('keydown', (event) => {    
     switch (event.code) {
         case 'KeyW':
-            p1.y -= SPEED 
+            keys.w_pressed = true
             break
 
         case 'KeyA':
-            p1.x -= SPEED
+            keys.a_pressed = true
             break
 
         case 'KeyS':
-            p1.y += SPEED
+            keys.s_pressed = true
             break
 
         case 'KeyD':
-            p1.x += SPEED
+            keys.d_pressed = true
             break
     }
-    p1.draw(c)
 })
   
   window.addEventListener('keyup', (event) => {
-    // console.log("Key released: " + event.code)
-    // switch (event.code) {
-    //   case 'KeyW':
-    //     keys.w.pressed = false
-    //     break
-  
-    //   case 'KeyA':
-    //     keys.a.pressed = false
-    //     break
-  
-    //   case 'KeyS':
-    //     keys.s.pressed = false
-    //     break
-  
-    //   case 'KeyD':
-    //     keys.d.pressed = false
-    //     break
-    // }
+    switch (event.code) {
+        case 'KeyW':
+            keys.w_pressed = false
+            break
+
+        case 'KeyA':
+            keys.a_pressed = false
+            break
+
+        case 'KeyS':
+            keys.s_pressed = false
+            break
+
+        case 'KeyD':
+            keys.d_pressed = false
+            break
+    }
   })
 
 function updateDirection(event) {
@@ -94,7 +87,16 @@ function updateDirection(event) {
     p1.draw(c)
 }
 
-canvas.addEventListener("mousemove",updateDirection, false)
+var last_shot = 0
+function fire(event) {
+    if(Date.now() - last_shot > 50){
+        last_shot = Date.now()
+        p1.shoot(event.x, event.y)
+    }
+}
+
+canvas.addEventListener("mousemove", updateDirection, false)
+canvas.addEventListener("mousedown", fire, false)
 // document.querySelector('#usernameForm').addEventListener('submit', (event) => {
 //     event.preventDefault()
 //     document.querySelector('#usernameForm').style.display = 'none'

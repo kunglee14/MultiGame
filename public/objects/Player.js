@@ -15,6 +15,17 @@ class Player{
         return [x_cord, y_cord]
     }
 
+    shoot(mouse_x, mouse_y){
+        
+        const cursor_offset_x = 10
+        const dy = -(mouse_y - p1.y) //Flipped since I want + Pi/4 to be top-right of character
+        const dx = mouse_x - cursor_offset_x - p1.x
+        const angle = Math.atan(dy/dx)
+        console.log("Rads: "+ angle + ", Deg : " + (angle * 180 / Math.PI))
+        const bullet = new Bullet(1,1,1)
+        bullet.draw()
+    }
+
     draw(cxt) { 
         cxt.shadowColor = this.color
         cxt.shadowBlur = 10
@@ -56,9 +67,9 @@ class Player{
         cxt.shadowColor = window.getComputedStyle(canvas).backgroundColor
         cxt.shadowBlur = 0
         
-        const length = 70
+        const center_to_corner_length = 50 + 10
         cxt.beginPath()
-        cxt.arc(this.x, this.y, length, 0, Math.PI * 2)
+        cxt.arc(this.x, this.y, center_to_corner_length, 0, Math.PI * 2)
         cxt.fillStyle = window.getComputedStyle(canvas).backgroundColor
         cxt.fill()
     }
