@@ -9,7 +9,7 @@ canvas.width = 1024 * devicePixelRatio
 canvas.height = 768 * devicePixelRatio
 
 c.scale(devicePixelRatio, devicePixelRatio)
-p1 = new Player(100,200,0,"#eb4034","Keeby")
+p1 = new Player(100,200,150,200,"#eb4034","Keeby")
 p1.draw(c)
 
 // setInterval(() => {
@@ -86,21 +86,10 @@ window.addEventListener('keydown', (event) => {
     //     break
     // }
   })
+
 function updateDirection(event) {
-    cursor_offset_y = 20
-    cursor_offset_x = 10
-    //Origin (0,0) is top left corner
-    dy = -(event.y-cursor_offset_y - p1.y) //Flipped since I want + Pi/4 to be top-right of character
-    dx = event.x-cursor_offset_x - p1.x
-    angle = Math.atan(dy/dx)
-    if(dx < 0){
-        angle = Math.PI + Math.atan(dy/dx)   
-    }
-    // if(dx < 0 && dy < 0){
-    //     angle = -Math.PI + Math.atan(dy/dx)
-    // }
-    console.log("Rads: "+ angle + ", Deg: " + (angle * 180 / Math.PI))
-    p1.angle = angle
+    p1.mouse_x = event.x
+    p1.mouse_y = event.y
     p1.remove(c)
     p1.draw(c)
 }
