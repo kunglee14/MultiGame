@@ -6,16 +6,17 @@ const socket = io()
 
 const devicePixelRatio = window.devicePixelRatio
 console.log(devicePixelRatio)
-canvas.width = 1024 * devicePixelRatio
-canvas.height = 768 * devicePixelRatio
+canvas.width = 1024 - 200
+canvas.height = 768 - 200
 // console.log(window.getComputedStyle(body).width, window.getComputedStyle(body).height)
 // w = parseFloat(window.getComputedStyle(body).width)
 // h = parseFloat(window.getComputedStyle(body).width)
 // canvas.width = w
 // canvas.height = h
-cxt.scale(devicePixelRatio, devicePixelRatio)
+// cxt.scale(devicePixelRatio, devicePixelRatio)
 
 const frontendPlayers = {}
+const frontendProjectiles = {}
 
 const keys = {
     w_pressed : false,
@@ -129,33 +130,24 @@ socket.on("updateScoreboard", (scoreboard)=>{
         sb.appendChild(li)
     }
 })
-socket.on("removeProjectile", (proj) =>{
-    cxt.shadowColor = window.getComputedStyle(canvas).backgroundColor
-    cxt.shadowBlur = 5
-    cxt.beginPath()
-    cxt.arc(proj.x, proj.y, proj.radius+5, 0, Math.PI * 2)
-    cxt.fillStyle = window.getComputedStyle(canvas).backgroundColor
-    cxt.fill()
-})
 socket.on("removeTrailProjectiles", (backendProjectiles) =>{
     for(const proj_id in backendProjectiles){
         const proj = backendProjectiles[proj_id]
-        cxt.shadowColor = window.getComputedStyle(canvas).backgroundColor
-        cxt.shadowBlur = 5
-        cxt.beginPath()
-        cxt.arc(proj.x, proj.y, proj.radius+5, 0, Math.PI * 2)
-        cxt.fillStyle = window.getComputedStyle(canvas).backgroundColor
-        cxt.fill()
+        if(frontendProjectiles[proj_id]){
+            frontendProjectiles[proj_id].remove()
+        }
     }
 })
 socket.on("updateProjectiles", (backendProjectiles) =>{
     for(const proj_id in backendProjectiles){
         const proj = backendProjectiles[proj_id]
-        cxt.shadowBlur = 5
-        cxt.beginPath()
-        cxt.arc(proj.x, proj.y, proj.radius, 0, Math.PI * 2)
-        cxt.fillStyle = "white"
-        cxt.fill()
+        if(!frontendProjectiles[proj_id]){
+            frontendProjectiles[proj_id] = new Bullet(proj.x, proj.y, proj.angle, proj.size)
+        } else {
+            frontendProjectiles[proj_id].x = proj.x
+            frontendProjectiles[proj_id].y = proj.y
+        }
+        frontendProjectiles[proj_id].draw()
     }
 })
 document.querySelector('#usernameForm').addEventListener('submit', (event) => {

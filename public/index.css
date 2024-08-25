@@ -3,11 +3,11 @@ canvas {
 }
 
 body {
-    background-color: black;
+    background-color: white;
 }
 
 #score-board{
-    color: white;
+    color: black;
     overflow:hidden;
 }
 #usernameContainer {
