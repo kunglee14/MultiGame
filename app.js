@@ -82,7 +82,7 @@ io.on('connection', (socket) => {
         const player = new Player(
             x, 
             y,
-            `hsl(${360 * Math.random()}, 100%, 30%)`, 
+            `hsl(${360 * Math.random()}, 100%, 60%)`, 
             username, 
             width, 
             height
@@ -113,7 +113,7 @@ setInterval(()=>{
         for(const player_id in backendPlayers){
             const player = backendPlayers[player_id]
             const dist = Math.hypot(proj.x-player.x, proj.y-player.y)
-            if(dist <= (player.clear_radius + proj.radius)){
+            if(dist <= (player.clear_radius + proj.size)){
                 delete backendProjectiles[proj_id]
                 scoreboard[proj.playerId].score++
                 io.emit("updateScoreboard", scoreboard)

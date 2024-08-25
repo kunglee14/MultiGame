@@ -24,7 +24,7 @@ class Player{
         cxt.fill()
 
         cxt.font = '12px sans-serif'
-        cxt.fillStyle = 'white'
+        cxt.fillStyle = 'black'
         cxt.fillText(this.username, this.x-(this.username.length * 2.5), this.y)
     }
 
