@@ -13,6 +13,7 @@ class Player{
         this.clear_radius = center_to_corner_length
         this.max_width = width
         this.max_height = height
+        this.intervals_since_last_shot = 0
     }
 
     updateLocation(keycode){
@@ -67,7 +68,7 @@ class Player{
         const dx = this.mouse_x - this.x
         var angle = Math.atan(dy/dx)
         if(dx < 0){
-            angle = Math.PI + Math.atan(dy/dx)   
+            angle += Math.PI  
         }
 
         const head_cords = this.#getCords(angle)

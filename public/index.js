@@ -4,16 +4,8 @@ const cxt = canvas.getContext('2d')
 
 const socket = io()
 
-const devicePixelRatio = window.devicePixelRatio
-console.log(devicePixelRatio)
-canvas.width = 1024 - 200
-canvas.height = 768 - 200
-// console.log(window.getComputedStyle(body).width, window.getComputedStyle(body).height)
-// w = parseFloat(window.getComputedStyle(body).width)
-// h = parseFloat(window.getComputedStyle(body).width)
-// canvas.width = w
-// canvas.height = h
-// cxt.scale(devicePixelRatio, devicePixelRatio)
+canvas.width = innerWidth
+canvas.height = innerHeight
 
 const frontendPlayers = {}
 const frontendProjectiles = {}
@@ -23,6 +15,9 @@ const keys = {
     a_pressed : false,
     s_pressed : false,
     d_pressed : false,
+    mouse_down : false,
+    mouse_x : 0,
+    mouse_y : 0,
 }
 
 setInterval(() => {
@@ -41,6 +36,12 @@ setInterval(() => {
     if (keys.d_pressed) {
         socket.emit("keydown",{keycode: "KeyD"})
     }
+
+    if (keys.mouse_down){
+        socket.emit("shotFired")
+    }
+
+    socket.emit("updateDirection", {mouse_x:keys.mouse_x, mouse_y:keys.mouse_y})
   }, 20)
 
 window.addEventListener('keydown', (event) => {    
@@ -62,8 +63,11 @@ window.addEventListener('keydown', (event) => {
             break
     }
 })
-  
-  window.addEventListener('keyup', (event) => {
+window.addEventListener("mousedown", (event) => {
+    keys.mouse_down = true
+})
+
+window.addEventListener('keyup', (event) => {
     switch (event.code) {
         case 'KeyW':
             keys.w_pressed = false
@@ -81,22 +85,29 @@ window.addEventListener('keydown', (event) => {
             keys.d_pressed = false
             break
     }
-  })
+})
+window.addEventListener("mouseup", (event) => {
+    keys.mouse_down = false
+})
 
-canvas.addEventListener("mousemove", (event) => (socket.emit("updateDirection", {mouse_x:event.x, mouse_y:event.y})), false)
-canvas.addEventListener("mousedown", (event) => (socket.emit("shotFired")), false)
-socket.on("cleanupPlayer", (player)=>{
+window.addEventListener("mousemove", (event) => {
+    keys.mouse_x = event.x
+    keys.mouse_y = event.y
+})
+
+socket.on("cleanupPlayer", (data)=>{
     const temp = new Player(
-        player.x,
-        player.y,
-        player.clear_radius
+        data.player.x,
+        data.player.y,
+        data.player.clear_radius
     )
-    temp.remove()
+    temp.erase()
+    delete frontendPlayers[socketId]
 })
 socket.on("updatePlayers", (backendPlayers) =>{
     for (const socketId in backendPlayers){
         const player_data = backendPlayers[socketId]
-        if(!frontendPlayers[socketId]){
+        if(frontendPlayers[socketId] == undefined){
             frontendPlayers[socketId] = new Player(
                 player_data.x,
                 player_data.y,
@@ -106,7 +117,7 @@ socket.on("updatePlayers", (backendPlayers) =>{
                 player_data.username
             )
         }else{
-            frontendPlayers[socketId].remove()
+            frontendPlayers[socketId].erase()
             frontendPlayers[socketId].x = player_data.x
             frontendPlayers[socketId].y = player_data.y
             frontendPlayers[socketId].clear_radius = player_data.clear_radius
@@ -115,39 +126,46 @@ socket.on("updatePlayers", (backendPlayers) =>{
         frontendPlayers[socketId].draw()
     }
 })
-socket.on("updateScoreboard", (scoreboard)=>{
-    const sb = document.getElementById("score-board")
-    const sorted = Object.keys(scoreboard)
-    .sort((a, b) => scoreboard[b] - scoreboard[a])
-    .reduce((acc, key) => {
-      acc[key] = scoreboard[key];
-      return acc;
-    }, {});
-    sb.innerHTML = null
-    for(const player_id in sorted){
-        const li = document.createElement("li")
-        li.appendChild(document.createTextNode(`${sorted[player_id].username}: ${sorted[player_id].score}`))
-        sb.appendChild(li)
-    }
-})
-socket.on("removeTrailProjectiles", (backendProjectiles) =>{
-    for(const proj_id in backendProjectiles){
-        const proj = backendProjectiles[proj_id]
-        if(frontendProjectiles[proj_id]){
-            frontendProjectiles[proj_id].remove()
-        }
-    }
-})
-socket.on("updateProjectiles", (backendProjectiles) =>{
-    for(const proj_id in backendProjectiles){
-        const proj = backendProjectiles[proj_id]
-        if(!frontendProjectiles[proj_id]){
-            frontendProjectiles[proj_id] = new Bullet(proj.x, proj.y, proj.angle, proj.size)
+// socket.on("updateScoreboard", (scoreboard)=>{
+//     const sb = document.getElementById("score-board")
+//     const sorted = Object.keys(scoreboard)
+//     .sort((a, b) => scoreboard[b] - scoreboard[a])
+//     .reduce((acc, key) => {
+//       acc[key] = scoreboard[key];
+//       return acc;
+//     }, {});
+//     sb.innerHTML = null
+//     for(const player_id in sorted){
+//         const li = document.createElement("li")
+//         li.appendChild(document.createTextNode(`${sorted[player_id].username}: ${sorted[player_id].score}`))
+//         sb.appendChild(li)
+//     }
+// })
+// socket.on("removeTrailProjectiles", (backendProjectiles) =>{
+//     for(const proj_id in backendProjectiles){
+//         const proj = backendProjectiles[proj_id]
+//         if(frontendProjectiles[proj_id]){
+//         }
+//     }
+// })
+socket.on("updateProjectiles", ({liveBackendProjectiles, deadBackendProjectiles}) =>{
+    for(const proj_id in liveBackendProjectiles){
+        console.log(`Live: ${proj_id}`)
+        const proj = liveBackendProjectiles[proj_id]
+        if(frontendProjectiles[proj_id] == undefined){
+            frontendProjectiles[proj_id] = new Bullet(proj.x, proj.y, proj.angle, proj.radius)
         } else {
+            frontendProjectiles[proj_id].erase()
             frontendProjectiles[proj_id].x = proj.x
             frontendProjectiles[proj_id].y = proj.y
         }
         frontendProjectiles[proj_id].draw()
+    }
+    
+    for(let i = 0; i < deadBackendProjectiles.length; i++){
+        const dead_id = deadBackendProjectiles[i]
+        frontendProjectiles[dead_id].erase()
+        delete frontendPlayers[dead_id]
     }
 })
 document.querySelector('#usernameForm').addEventListener('submit', (event) => {
@@ -157,3 +175,9 @@ document.querySelector('#usernameForm').addEventListener('submit', (event) => {
     document.querySelector("body").removeChild(document.querySelector('#usernameContainer'))
     socket.emit("initGame", {username:username, width:canvas.width, height:canvas.height})
 })
+window.addEventListener('resize', () => {
+    console.log('Window resized!');
+    console.log(`Width: ${window.innerWidth}, Height: ${window.innerHeight}`);
+    canvas.width = innerWidth
+    canvas.height = innerHeight
+});

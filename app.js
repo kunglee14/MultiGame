@@ -11,7 +11,7 @@ const {Bullet} = require("./private/Bullet")
 const http = require('http')
 const server = http.createServer(app)
 const { Server } = require('socket.io')
-const io = new Server(server, { pingInterval: 2000, pingTimeout: 5000 })
+const io = new Server(server, { pingInterval: 20, pingTimeout: 500 })
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
@@ -29,33 +29,33 @@ io.on('connection', (socket) => {
     console.log(`a user connected: ${socket.id}`)
     socket.on('disconnect', (reason) => {
         const player = backendPlayers[socket.id] 
-        // console.log(player)
-        if(player){
+
+        if(player != undefined){
             delete backendPlayers[socket.id]
             delete scoreboard[socket.id]
-            io.emit('cleanupPlayer', player)
+            io.emit('cleanupPlayer', {player:player, socketId:socket.id})
             console.log(`${player.username} disconnected: ${reason}`)
         }
     })
     socket.on('keydown', ({keycode}) => {
-        if(!backendPlayers[socket.id]) return
+        if(backendPlayers[socket.id] == undefined) return
         backendPlayers[socket.id].updateLocation(keycode)
         backendPlayers[socket.id].updatePlayerVertCords()
     })
 
-    var last_shot = 0
     let projectileId = 0
     socket.on("shotFired", ()=>{
         if(!backendPlayers[socket.id]) return
-        if(Date.now() - last_shot > 500){
-            last_shot = Date.now()
-            const player = backendPlayers[socket.id]
+        
+        const player = backendPlayers[socket.id]
+        if(player.intervals_since_last_shot >= 30){
+            player.intervals_since_last_shot = 0
             const dy = -(player.mouse_y - player.y)
             const dx = player.mouse_x - player.x
             
             var angle = Math.atan(dy/dx)
             if(dx < 0){
-                angle = Math.PI + Math.atan(dy/dx)   
+                angle += Math.PI   
             }
             backendProjectiles[projectileId++] = new Bullet(
                 player.cords.head[0],
@@ -99,8 +99,12 @@ io.on('connection', (socket) => {
     })
 })
 
+const removedProj = []
 setInterval(()=>{
-    io.emit("removeTrailProjectiles", backendProjectiles)
+    // io.emit("removeTrailProjectiles", backendProjectiles)
+
+    //This clears the array without allocating new memory
+    removedProj.length = 0
 
     //Change Do collision checks
     for (const proj_id in backendProjectiles){
@@ -108,6 +112,7 @@ setInterval(()=>{
         proj.updateLocation()
         if(proj.x < 0 || proj.x > canvas_width || proj.y < 0 || proj.y > canvas_height){
             delete backendProjectiles[proj_id]
+            removedProj.push(proj_id)
         }
         
         for(const player_id in backendPlayers){
@@ -115,14 +120,17 @@ setInterval(()=>{
             const dist = Math.hypot(proj.x-player.x, proj.y-player.y)
             if(dist <= (player.clear_radius + proj.size)){
                 delete backendProjectiles[proj_id]
+                removedProj.push(proj_id)
                 scoreboard[proj.playerId].score++
                 io.emit("updateScoreboard", scoreboard)
                 break
             }
         }
     }
-
-    io.emit("updateProjectiles", backendProjectiles)
+    for(const player_id in backendPlayers){
+        backendPlayers[player_id].intervals_since_last_shot += 1
+    }
+    io.emit("updateProjectiles", {liveBackendProjectiles:backendProjectiles, deadBackendProjectiles:removedProj})
     io.emit("updatePlayers", backendPlayers)
 },20)
 

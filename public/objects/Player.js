@@ -28,7 +28,7 @@ class Player{
         cxt.fillText(this.username, this.x-(this.username.length * 2.5), this.y)
     }
 
-    remove() {
+    erase() {
         // cxt.shadowColor = window.getComputedStyle(canvas).backgroundColor
         cxt.shadowBlur = 0
         

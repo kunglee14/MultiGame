@@ -1,4 +1,4 @@
-const BULLET_SIZE = 10
+const BULLET_RADIUS = 10
 const BULLET_SPEED = 20
 
 class Bullet{
@@ -7,11 +7,11 @@ class Bullet{
         this.y = y
         this.angle = angle
         this.playerId = playerId
-        this.size = BULLET_SIZE
+        this.radius = BULLET_RADIUS
     }
     
     updateLocation(){
-        this.x += BULLET_SIZE * Math.cos(this.angle)
+        this.x += BULLET_SPEED * Math.cos(this.angle)
         this.y -= BULLET_SPEED * Math.sin(this.angle)
     }
 }
