@@ -19,7 +19,7 @@ app.get('/', (req, res) => {
 }); 
 
 const backendPlayers = {}
-const backendProjectiles = {}
+const backendProjectiles = []
 const scoreboard = {}
 
 let canvas_width = null
@@ -40,10 +40,9 @@ io.on('connection', (socket) => {
     socket.on('keydown', ({keycode}) => {
         if(backendPlayers[socket.id] == undefined) return
         backendPlayers[socket.id].updateLocation(keycode)
-        backendPlayers[socket.id].updatePlayerVertCords()
+        backendPlayers[socket.id].updatePlayerVertCords(null, null, canvas_width, canvas_height)
     })
 
-    let projectileId = 0
     socket.on("shotFired", ()=>{
         if(!backendPlayers[socket.id]) return
         
@@ -57,18 +56,19 @@ io.on('connection', (socket) => {
             if(dx < 0){
                 angle += Math.PI   
             }
-            backendProjectiles[projectileId++] = new Bullet(
+            backendProjectiles.push(new Bullet(
                 player.cords.head[0],
                 player.cords.head[1],
                 angle,
-                socket.id
-            )
+                socket.id,
+                player.color
+            ))
         }
     })
 
     socket.on("updateDirection", ({mouse_x, mouse_y}) =>{
         if(!backendPlayers[socket.id]) return
-        backendPlayers[socket.id].updatePlayerVertCords(mouse_x, mouse_y)
+        backendPlayers[socket.id].updatePlayerVertCords(mouse_x, mouse_y, canvas_width, canvas_height)
     })
 
     socket.on("initGame", ({username, width, height}) =>{
@@ -83,9 +83,7 @@ io.on('connection', (socket) => {
             x, 
             y,
             `hsl(${360 * Math.random()}, 100%, 60%)`, 
-            username, 
-            width, 
-            height
+            username
         )
 
         player.updatePlayerVertCords(mouse_x, mouse_y)
@@ -97,30 +95,30 @@ io.on('connection', (socket) => {
         }
         io.emit("updateScoreboard",scoreboard)
     })
+    socket.on('resizeScreen', ({width, height}) => {
+        canvas_width = width 
+        canvas_height = height
+        io.emit("updateScoreboard",scoreboard)
+    })
 })
 
-const removedProj = []
 setInterval(()=>{
-    // io.emit("removeTrailProjectiles", backendProjectiles)
-
-    //This clears the array without allocating new memory
-    removedProj.length = 0
-
     //Change Do collision checks
-    for (const proj_id in backendProjectiles){
-        const proj = backendProjectiles[proj_id]
+    for (let i = 0; i < backendProjectiles.length; i++){
+        const proj = backendProjectiles[i]
         proj.updateLocation()
         if(proj.x < 0 || proj.x > canvas_width || proj.y < 0 || proj.y > canvas_height){
-            delete backendProjectiles[proj_id]
-            removedProj.push(proj_id)
+            backendProjectiles.splice(i,1) //Remove 1 element at index i
         }
         
         for(const player_id in backendPlayers){
+            if(player_id == proj.playerId){
+                continue
+            }
             const player = backendPlayers[player_id]
             const dist = Math.hypot(proj.x-player.x, proj.y-player.y)
-            if(dist <= (player.clear_radius + proj.size)){
-                delete backendProjectiles[proj_id]
-                removedProj.push(proj_id)
+            if(dist <= (player.clear_radius + proj.radius)){
+                backendProjectiles.splice(i,1) //Remove 1 element at index i
                 scoreboard[proj.playerId].score++
                 io.emit("updateScoreboard", scoreboard)
                 break
@@ -130,7 +128,7 @@ setInterval(()=>{
     for(const player_id in backendPlayers){
         backendPlayers[player_id].intervals_since_last_shot += 1
     }
-    io.emit("updateProjectiles", {liveBackendProjectiles:backendProjectiles, deadBackendProjectiles:removedProj})
+    io.emit("updateProjectiles", backendProjectiles)
     io.emit("updatePlayers", backendPlayers)
 },20)
 

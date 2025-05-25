@@ -1,16 +1,17 @@
 class Bullet{
-    constructor(x, y, angle, radius){
+    constructor(x, y, angle, radius, color){
         this.x = x
         this.y = y
         this.angle = angle
         this.radius = radius
+        this.color = color
     }
     
     draw(){
         cxt.shadowBlur = 5
         cxt.beginPath()
         cxt.arc(this.x, this.y, this.radius, 0, Math.PI * 2)
-        cxt.fillStyle = "white"
+        cxt.fillStyle = this.color
         cxt.fill()
     }
     erase(){

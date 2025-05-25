@@ -8,7 +8,8 @@ canvas.width = innerWidth
 canvas.height = innerHeight
 
 const frontendPlayers = {}
-const frontendProjectiles = {}
+const frontendProjectiles = []
+const scoreboard = new Scoreboard()
 
 const keys = {
     w_pressed : false,
@@ -126,46 +127,26 @@ socket.on("updatePlayers", (backendPlayers) =>{
         frontendPlayers[socketId].draw()
     }
 })
-// socket.on("updateScoreboard", (scoreboard)=>{
-//     const sb = document.getElementById("score-board")
-//     const sorted = Object.keys(scoreboard)
-//     .sort((a, b) => scoreboard[b] - scoreboard[a])
-//     .reduce((acc, key) => {
-//       acc[key] = scoreboard[key];
-//       return acc;
-//     }, {});
-//     sb.innerHTML = null
-//     for(const player_id in sorted){
-//         const li = document.createElement("li")
-//         li.appendChild(document.createTextNode(`${sorted[player_id].username}: ${sorted[player_id].score}`))
-//         sb.appendChild(li)
-//     }
-// })
-// socket.on("removeTrailProjectiles", (backendProjectiles) =>{
-//     for(const proj_id in backendProjectiles){
-//         const proj = backendProjectiles[proj_id]
-//         if(frontendProjectiles[proj_id]){
-//         }
-//     }
-// })
-socket.on("updateProjectiles", ({liveBackendProjectiles, deadBackendProjectiles}) =>{
-    for(const proj_id in liveBackendProjectiles){
-        console.log(`Live: ${proj_id}`)
-        const proj = liveBackendProjectiles[proj_id]
-        if(frontendProjectiles[proj_id] == undefined){
-            frontendProjectiles[proj_id] = new Bullet(proj.x, proj.y, proj.angle, proj.radius)
-        } else {
-            frontendProjectiles[proj_id].erase()
-            frontendProjectiles[proj_id].x = proj.x
-            frontendProjectiles[proj_id].y = proj.y
-        }
-        frontendProjectiles[proj_id].draw()
+socket.on("updateScoreboard", (scores)=>{
+    const score_width = Math.min(300, canvas.width/4)
+    const score_height = Math.min(canvas.height - 100, canvas.height / 2)
+    const padding = Math.min(canvas.width/10, 50)
+    console.log(`${score_width}, ${score_height}, ${padding}`)
+    scoreboard.setLocation(canvas.width-score_width-padding, padding)
+    scoreboard.setSize(score_width, score_height)
+    scoreboard.draw()
+})
+socket.on("updateProjectiles", (backendProjectiles) =>{
+    for(let i = 0; i < frontendProjectiles.length; i++){
+        frontendProjectiles[i].erase()
     }
-    
-    for(let i = 0; i < deadBackendProjectiles.length; i++){
-        const dead_id = deadBackendProjectiles[i]
-        frontendProjectiles[dead_id].erase()
-        delete frontendPlayers[dead_id]
+    //This clears the array without allocating new memory
+    frontendProjectiles.length = 0
+
+    for(let i = 0; i < backendProjectiles.length; i++){
+        const proj = backendProjectiles[i]
+        frontendProjectiles.push(new Bullet(proj.x, proj.y, proj.angle, proj.radius, proj.color))
+        frontendProjectiles[i].draw()
     }
 })
 document.querySelector('#usernameForm').addEventListener('submit', (event) => {
@@ -176,8 +157,7 @@ document.querySelector('#usernameForm').addEventListener('submit', (event) => {
     socket.emit("initGame", {username:username, width:canvas.width, height:canvas.height})
 })
 window.addEventListener('resize', () => {
-    console.log('Window resized!');
-    console.log(`Width: ${window.innerWidth}, Height: ${window.innerHeight}`);
     canvas.width = innerWidth
     canvas.height = innerHeight
+    socket.emit("resizeScreen", {width:canvas.width, height:canvas.height})
 });

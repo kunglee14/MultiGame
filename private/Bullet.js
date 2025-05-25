@@ -1,13 +1,14 @@
 const BULLET_RADIUS = 10
-const BULLET_SPEED = 20
+const BULLET_SPEED = 10
 
 class Bullet{
-    constructor(x, y, angle, playerId){
+    constructor(x, y, angle, playerId, color){
         this.x = x
         this.y = y
         this.angle = angle
         this.playerId = playerId
         this.radius = BULLET_RADIUS
+        this.color = color
     }
     
     updateLocation(){

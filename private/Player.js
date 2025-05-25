@@ -1,8 +1,8 @@
 const center_to_corner_length = 50
-const SPEED = 10
+const SPEED = 6
 
 class Player{
-    constructor(x, y, color, username, width, height) {
+    constructor(x, y, color, username) {
         this.x = x
         this.y = y
         this.color = color
@@ -11,8 +11,6 @@ class Player{
         this.mouse_x = null
         this.mouse_y = null
         this.clear_radius = center_to_corner_length
-        this.max_width = width
-        this.max_height = height
         this.intervals_since_last_shot = 0
     }
 
@@ -41,7 +39,7 @@ class Player{
         return [x_cord, y_cord]
     }
 
-    updatePlayerVertCords(mouse_x, mouse_y){
+    updatePlayerVertCords(mouse_x, mouse_y, max_width, max_height){
         if(mouse_x != null && mouse_y != null){
             this.mouse_x = mouse_x
             this.mouse_y = mouse_y 
@@ -53,14 +51,14 @@ class Player{
         
         if(this.x < 0){
             this.x = 0
-        } else if(this.x > this.max_width){
-            this.x = this.max_width
+        } else if(this.x > max_width){
+            this.x = max_width
         }
 
         if(this.y < 0){
             this.y = 0
-        }else if(this.y > this.max_height){
-            this.y = this.max_height
+        }else if(this.y > max_height){
+            this.y = max_height
         }
 
         //Origin (0,0) is top left corner

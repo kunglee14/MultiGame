@@ -10,7 +10,7 @@ class Player{
 
     draw() { 
         cxt.shadowColor = this.color
-        cxt.shadowBlur = 15
+        cxt.shadowBlur = 10
 
         cxt.beginPath()
 
@@ -26,12 +26,13 @@ class Player{
         cxt.font = '12px sans-serif'
         cxt.fillStyle = 'black'
         cxt.fillText(this.username, this.x-(this.username.length * 2.5), this.y)
+
+        cxt.shadowBlur = 0
     }
 
     erase() {
-        // cxt.shadowColor = window.getComputedStyle(canvas).backgroundColor
-        cxt.shadowBlur = 0
         
+        cxt.shadowBlur = 0
         cxt.beginPath()
         cxt.arc(this.x, this.y, this.clear_radius+10, 0, Math.PI * 2)
         cxt.fillStyle = window.getComputedStyle(canvas).backgroundColor
