@@ -43,7 +43,7 @@ setInterval(() => {
     }
 
     socket.emit("updateDirection", {mouse_x:keys.mouse_x, mouse_y:keys.mouse_y})
-  }, 20)
+  }, 10)
 
 window.addEventListener('keydown', (event) => {    
     switch (event.code) {
@@ -114,6 +114,7 @@ socket.on("updatePlayers", (backendPlayers) =>{
                 player_data.y,
                 player_data.clear_radius,
                 player_data.cords,
+                player_data.erase_cords,
                 player_data.color,
                 player_data.username
             )
@@ -123,6 +124,7 @@ socket.on("updatePlayers", (backendPlayers) =>{
             frontendPlayers[socketId].y = player_data.y
             frontendPlayers[socketId].clear_radius = player_data.clear_radius
             frontendPlayers[socketId].cords = player_data.cords
+            frontendPlayers[socketId].erase_cords = player_data.erase_cords
         }
         frontendPlayers[socketId].draw()
     }
@@ -131,9 +133,11 @@ socket.on("updateScoreboard", (scores)=>{
     const score_width = Math.min(300, canvas.width/4)
     const score_height = Math.min(canvas.height - 100, canvas.height / 2)
     const padding = Math.min(canvas.width/10, 50)
-    console.log(`${score_width}, ${score_height}, ${padding}`)
+    // console.log(`${score_width}, ${score_height}, ${padding}`)
     scoreboard.setLocation(canvas.width-score_width-padding, padding)
     scoreboard.setSize(score_width, score_height)
+    console.log(scores)
+    scoreboard.setScores(scores)
     scoreboard.draw()
 })
 socket.on("updateProjectiles", (backendProjectiles) =>{
@@ -145,8 +149,9 @@ socket.on("updateProjectiles", (backendProjectiles) =>{
 
     for(let i = 0; i < backendProjectiles.length; i++){
         const proj = backendProjectiles[i]
-        frontendProjectiles.push(new Bullet(proj.x, proj.y, proj.angle, proj.radius, proj.color))
-        frontendProjectiles[i].draw()
+        const new_proj = new Bullet(proj.x, proj.y, proj.angle, proj.radius, proj.color)
+        new_proj.draw()
+        frontendProjectiles.push(new_proj)
     }
 })
 document.querySelector('#usernameForm').addEventListener('submit', (event) => {

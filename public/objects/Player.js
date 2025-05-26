@@ -1,6 +1,7 @@
 class Player{
-    constructor(x, y, clear_radius, cords, color, username) {
+    constructor(x, y, clear_radius, cords, erase_cords, color, username) {
         this.cords = cords
+        this.erase_cords = erase_cords
         this.color = color
         this.username = username
         this.clear_radius = clear_radius
@@ -9,11 +10,12 @@ class Player{
     }    
 
     draw() { 
-        cxt.shadowColor = this.color
-        cxt.shadowBlur = 10
 
-        cxt.beginPath()
-
+        cxt.shadowBlur = 5;               
+        cxt.shadowColor = this.color;          
+        cxt.shadowOffsetX = 0;             
+        cxt.shadowOffsetY = 0;  
+        cxt.beginPath()           
         cxt.moveTo(this.cords.head[0], this.cords.head[1])
 
         cxt.lineTo(this.cords.left[0], this.cords.left[1])
@@ -22,21 +24,26 @@ class Player{
 
         cxt.fillStyle = this.color
         cxt.fill()
+        cxt.shadowBlur = 0
 
         cxt.font = '12px sans-serif'
         cxt.fillStyle = 'black'
         cxt.fillText(this.username, this.x-(this.username.length * 2.5), this.y)
-
-        cxt.shadowBlur = 0
+        
     }
 
-    erase() {
-        
-        cxt.shadowBlur = 0
+    erase() {   
         cxt.beginPath()
-        cxt.arc(this.x, this.y, this.clear_radius+10, 0, Math.PI * 2)
+         
+        cxt.moveTo(this.erase_cords.head[0], this.erase_cords.head[1])
+
+        cxt.lineTo(this.erase_cords.left[0], this.erase_cords.left[1])
+
+        cxt.lineTo(this.erase_cords.right[0], this.erase_cords.right[1])
+
         cxt.fillStyle = window.getComputedStyle(canvas).backgroundColor
         // cxt.fillStyle = "white"
         cxt.fill()
+        cxt.shadowBlur = 0
     }
 }

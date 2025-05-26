@@ -21,6 +21,7 @@ app.get('/', (req, res) => {
 const backendPlayers = {}
 const backendProjectiles = []
 const scoreboard = {}
+let sorted_scores = []
 
 let canvas_width = null
 let canvas_height = null
@@ -44,10 +45,10 @@ io.on('connection', (socket) => {
     })
 
     socket.on("shotFired", ()=>{
-        if(!backendPlayers[socket.id]) return
+        if(backendPlayers[socket.id] == undefined) return
         
         const player = backendPlayers[socket.id]
-        if(player.intervals_since_last_shot >= 30){
+        if(player.intervals_since_last_shot >= 50){
             player.intervals_since_last_shot = 0
             const dy = -(player.mouse_y - player.y)
             const dx = player.mouse_x - player.x
@@ -67,22 +68,23 @@ io.on('connection', (socket) => {
     })
 
     socket.on("updateDirection", ({mouse_x, mouse_y}) =>{
-        if(!backendPlayers[socket.id]) return
+        if(backendPlayers[socket.id] == undefined) return
         backendPlayers[socket.id].updatePlayerVertCords(mouse_x, mouse_y, canvas_width, canvas_height)
     })
 
     socket.on("initGame", ({username, width, height}) =>{
-        const x = width * Math.random()
-        const y = height * Math.random()
+        const x = Math.round(width * Math.random())
+        const y = Math.round(height * Math.random())
         canvas_width = width 
         canvas_height = height
         const mouse_x = x
         const mouse_y = y
         
+        const player_color = `hsl(${360 * Math.random()}, 100%, 60%)`
         const player = new Player(
             x, 
             y,
-            `hsl(${360 * Math.random()}, 100%, 60%)`, 
+            player_color, 
             username
         )
 
@@ -91,14 +93,13 @@ io.on('connection', (socket) => {
 
         scoreboard[socket.id] = {
             score: 0,
-            username: username
+            username: username,
+            color: player_color
         }
-        io.emit("updateScoreboard",scoreboard)
     })
     socket.on('resizeScreen', ({width, height}) => {
         canvas_width = width 
         canvas_height = height
-        io.emit("updateScoreboard",scoreboard)
     })
 })
 
@@ -120,7 +121,9 @@ setInterval(()=>{
             if(dist <= (player.clear_radius + proj.radius)){
                 backendProjectiles.splice(i,1) //Remove 1 element at index i
                 scoreboard[proj.playerId].score++
-                io.emit("updateScoreboard", scoreboard)
+
+                sorted_scores = Object.values(scoreboard).sort((a, b) => b.score - a.score);
+                // console.log(sorted_scores)
                 break
             }
         }
@@ -130,9 +133,10 @@ setInterval(()=>{
     }
     io.emit("updateProjectiles", backendProjectiles)
     io.emit("updatePlayers", backendPlayers)
-},20)
+    io.emit("updateScoreboard", sorted_scores.slice(0,10))
+},10)
 
-server.listen(port, () => {
+server.listen(port,() => {
     console.log(`Server running at http://localhost:${port}/`);
 });
 

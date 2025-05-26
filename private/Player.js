@@ -1,5 +1,5 @@
 const center_to_corner_length = 50
-const SPEED = 6
+const SPEED = 4
 
 class Player{
     constructor(x, y, color, username) {
@@ -8,6 +8,7 @@ class Player{
         this.color = color
         this.username = username
         this.cords = null
+        this.erase_cords = null
         this.mouse_x = null
         this.mouse_y = null
         this.clear_radius = center_to_corner_length
@@ -33,9 +34,9 @@ class Player{
         }
     }
 
-    #getCords(ang) {
-        const x_cord = this.x + (center_to_corner_length * Math.cos(ang))
-        const y_cord = this.y - (center_to_corner_length * Math.sin(ang))
+    #getCords(ang, length) {
+        const x_cord = this.x + (length * Math.cos(ang))
+        const y_cord = this.y - (length * Math.sin(ang))
         return [x_cord, y_cord]
     }
 
@@ -65,14 +66,21 @@ class Player{
         const dy = -(this.mouse_y - this.y) //Flipped since I want + Pi/4 to be top-right of character
         const dx = this.mouse_x - this.x
         var angle = Math.atan(dy/dx)
+        // console.log(`(${this.x},${this.y}) -> (${this.mouse_x}, ${this.mouse_y}) at ${angle}`)
         if(dx < 0){
             angle += Math.PI  
         }
 
-        const head_cords = this.#getCords(angle)
-        const left_cords = this.#getCords(Math.PI * (2/3) + angle)
-        const right_cords = this.#getCords(Math.PI * (4/3) + angle)
+        const head_cords = this.#getCords(angle, center_to_corner_length)
+        const left_cords = this.#getCords(Math.PI * (2/3) + angle, center_to_corner_length)
+        const right_cords = this.#getCords(Math.PI * (4/3) + angle, center_to_corner_length)
         this.cords = {head:head_cords, left:left_cords, right:right_cords}
+
+        const offset = 10
+        const erase_head_cords = this.#getCords(angle, center_to_corner_length+offset)
+        const erase_left_cords = this.#getCords(Math.PI * (2/3) + angle, center_to_corner_length+offset)
+        const erase_right_cords = this.#getCords(Math.PI * (4/3) + angle, center_to_corner_length+offset)
+        this.erase_cords = {head:erase_head_cords, left:erase_left_cords, right:erase_right_cords}
     }
 }
 module.exports = {Player}
