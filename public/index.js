@@ -136,7 +136,7 @@ socket.on("updateScoreboard", (scores)=>{
     // console.log(`${score_width}, ${score_height}, ${padding}`)
     scoreboard.setLocation(canvas.width-score_width-padding, padding)
     scoreboard.setSize(score_width, score_height)
-    console.log(scores)
+    // console.log(scores)
     scoreboard.setScores(scores)
     scoreboard.draw()
 })
